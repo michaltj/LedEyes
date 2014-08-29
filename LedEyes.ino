@@ -44,8 +44,8 @@ int cntEffect = 0;
 /*
   Arduino setup
 */
-void setup() {
-  
+void setup() 
+{
   // MAX72XX is in power-saving mode on startup, we have to do a wakeup call
   lc.shutdown(0,false);
   lc.shutdown(1,false);
@@ -429,13 +429,14 @@ void moveEyes(int newX, int newY, int stepDelay)
   int dirX = (newX >= currentX) ? 1 : -1;
   int dirY = (newY >= currentY) ? 1 : -1;
   int steps = (stepsX > stepsY) ? stepsX : stepsY;
-  float changeX = stepsX / steps;
-  float changeY = stepsY / steps;
+  int intX, intY;
+  float changeX = (float)stepsX / (float)steps;
+  float changeY = (float)stepsY / (float)steps;
   for (int i=1; i<=steps; i++)
   {
-    currentX = startX + round(changeX * i * dirX);
-    currentY = startY + round(changeY * i * dirY);
-    displayEyes(currentX, currentY);
+    intX = startX + round(changeX * i * dirX);
+    intY = startY + round(changeY * i * dirY);
+    displayEyes(intX, intY);
     delay(stepDelay);
   }
 }
@@ -477,22 +478,22 @@ void roundSpin(int times)
   if (times == 0)
     return;
   
-  moveEyes(0, 2, 50);
+  moveEyes(2, 0, 50);
   delay(500);
   
   for (int i=0; i<times; i++)
   {
-    displayEyes(1,2); delay(40);
-    displayEyes(2,1); delay(40);
-    displayEyes(2,0); delay(40);
-    displayEyes(2,-1); delay(40);
-    displayEyes(1,-2); delay(40);
-    displayEyes(0,-2); delay(40);
-    displayEyes(-1,-2); delay(40);
-    displayEyes(-2,-1); delay(40);
-    displayEyes(-2,0); delay(40);
-    displayEyes(-2,1); delay(40);
-    displayEyes(-1,2); delay(40);
-    displayEyes(0,2); delay(40);
+    displayEyes(2, -1); delay(40);
+    displayEyes(1, -2); delay(40);
+    displayEyes(0, -2); delay(40);
+    displayEyes(-1, -2); delay(40);
+    displayEyes(-2, -1); delay(40);
+    displayEyes(-2, 0); delay(40);
+    displayEyes(-2, 1); delay(40);
+    displayEyes(-1, 2); delay(40);
+    displayEyes(0, 2); delay(40);
+    displayEyes(1, 2); delay(40);
+    displayEyes(2, 1); delay(40);
+    displayEyes(2, 0); delay(40);
   }
 }
