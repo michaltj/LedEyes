@@ -22,23 +22,30 @@ byte eyeBall[8]={
   B00111100
 };
 
+byte eyePupil = B11100111;
+
 // stores current state of LEDs
 byte eyeCurrent[8];
 int currentX;
 int currentY;
+int cntLoop = 0;
+int cntEffect = 0;
 
 // min and max positions
 #define MIN -2
 #define MAX  2
 
 // delays
-#define DELAY_BLINK 25
+#define DELAY_BLINK 40
+
+// perform an effect every # of loop iterations, 0 to disable
+#define EFFECT_ITERATION 4
 
 /*
   Arduino setup
 */
 void setup() {
-
+  
   // MAX72XX is in power-saving mode on startup, we have to do a wakeup call
   lc.shutdown(0,false);
   lc.shutdown(1,false);
@@ -50,7 +57,7 @@ void setup() {
   // clear both modules
   lc.clearDisplay(0);
   lc.clearDisplay(1);
-  
+ 
   // LED test
   // vertical line
   byte b = B10000000;
@@ -76,7 +83,7 @@ void setup() {
    // clear both modules
   lc.clearDisplay(0);
   lc.clearDisplay(1);
-  delay(1000);
+  delay(500);
 
   // random seed
   randomSeed(analogRead(0));
@@ -94,30 +101,200 @@ void setup() {
 */
 void loop() 
 { 
+ 
   // move to random position, wait random time
   moveEyes(random(MIN, MAX + 1), random(MIN, MAX + 1), 50);
   delay(random(2, 7) * 500);
   
   // blink time?
-  if (random(0,5) == 0)
+  if (random(0, 5) == 0)
   {
     delay(500);
     blinkEyes();
     delay(500);
   }
+  
+  // effect time?
+  if (EFFECT_ITERATION > 0)
+  {
+    cntLoop++;
+    if (cntLoop == EFFECT_ITERATION)
+    {
+      cntLoop = 0;
+      if (cntEffect > 5) cntEffect = 0;
+      switch(cntEffect)
+      {
+        case 0: // crazy blink
+          blinkEyes(true, false);
+          blinkEyes(false, true);
+          blinkEyes(true, false);
+          blinkEyes(false, true);
+          delay(1000);
+          break;
+    
+        case 1: // cross eyes
+          crossEyes();
+          delay(1000);
+          break;
+    
+        case 2: // crazy spin
+          crazySpin(2);
+          delay(1000);
+          break;
+        
+        case 3: // lazy eye
+          lazyEye();
+          delay(1000);
+          break;
+          
+        case 4: // glow
+          glowEyes(3);
+          delay(1000);
+          break;
+          
+        case 5: // round spin
+          roundSpin(2);
+          delay(1000);
+          break;
+          
+        default: 
+          break;
+      }
+      cntEffect++;
+    }
+  }
 }
 
 /*
-  This method corrects provided coordinate value
+  This method blinks both eyes
 */
-int getValidValue(int value)
+void blinkEyes()
 {
-  if (value > MAX)
-    return MAX;
-  else if (value < MIN)
-    return MIN;
-  else
-    return value;
+  blinkEyes(true, true);
+}
+
+/*
+  This method blinks eyes as per provided params
+*/
+void blinkEyes(boolean blinkLeft, boolean blinkRight)
+{
+  // blink?
+  if (!blinkLeft && !blinkRight)
+    return;
+  
+  // close eyelids
+  for (int i=0; i<=3; i++)
+  {
+    if (blinkLeft)
+    {
+      lc.setRow(0, i, 0);
+      lc.setRow(0, 7-i, 0);
+    }
+    if (blinkRight)
+    {
+      lc.setRow(1, i, 0);
+      lc.setRow(1, 7-i, 0);
+    }
+    delay(DELAY_BLINK);
+  }
+  
+  // open eyelids
+  for (int i=3; i>=0; i--) 
+  {
+    if (blinkLeft)
+    {
+      lc.setRow(0, i, eyeCurrent[i]);
+      lc.setRow(0, 7-i, eyeCurrent[7-i]);
+    }
+    if (blinkRight)
+    {
+      lc.setRow(1, i, eyeCurrent[i]);
+      lc.setRow(1, 7-i, eyeCurrent[7-i]);
+    }
+    delay(DELAY_BLINK);
+  }
+}
+/*
+  This methods spins moves eyes to center position, 
+  then moves horizontally with wrapping around edges.
+*/
+void crazySpin(int times)
+{
+  if (times == 0)
+    return;
+  
+  moveEyes(0, 0, 50);
+  delay(500);
+  
+  byte row = eyePupil;
+  for (int t=0; t<times; t++)
+  {
+    // spin from center to L
+    for (int i=0; i<5; i++)
+    {
+      row = row >> 1;
+      row = row | B10000000;
+      lc.setRow(0, 3, row);  lc.setRow(1, 3, row);  
+      lc.setRow(0, 4, row);  lc.setRow(1, 4, row);
+      delay(50); 
+      if (t == 0) 
+        delay((5-i)*10); // increase delay on 1st scroll (speed up effect)
+    }
+    // spin from R to center
+    for (int i=0; i<5; i++)
+    {
+      row = row >> 1;
+      if (i>=2) 
+        row = row | B10000000;
+      lc.setRow(0, 3, row);  lc.setRow(1, 3, row);  
+      lc.setRow(0, 4, row);  lc.setRow(1, 4, row);
+      delay(50);
+      if (t == (times-1)) 
+        delay((i+1)*10); // increase delay on last scroll (slow down effect)
+    }
+  }
+}
+
+/*
+  This method crosses eyes
+*/
+void crossEyes()
+{
+  moveEyes(0, 0, 50);
+  delay(500);
+
+  byte pupilR = eyePupil;  
+  byte pupilL = eyePupil;
+  
+  // move pupils together
+  for (int i=0; i<2; i++)
+  {
+    pupilR = pupilR >> 1;
+    pupilR = pupilR | B10000000;
+    pupilL = pupilL << 1;
+    pupilL = pupilL | B1;
+    
+    lc.setRow(0, 3, pupilR); lc.setRow(1, 3, pupilL);
+    lc.setRow(0, 4, pupilR); lc.setRow(1, 4, pupilL);
+    
+    delay(100);
+  }
+  
+  delay(2000);
+  
+  // move pupils back to center
+  for (int i=0; i<2; i++)
+  {
+    pupilR = pupilR << 1;
+    pupilR = pupilR | B1;
+    pupilL = pupilL >> 1;
+    pupilL = pupilL | B10000000;
+    
+    lc.setRow(0, 3, pupilR); lc.setRow(1, 3, pupilL);
+    lc.setRow(0, 4, pupilR); lc.setRow(1, 4, pupilL);
+    
+    delay(100);
+  }
 }
 
 /*
@@ -135,8 +312,8 @@ void displayEyes(int offsetX, int offsetY)
   int row1 = 3 - offsetY;
   int row2 = 4 - offsetY;
 
-  // pupil row
-  byte pupilRow = B11100111;
+  // define pupil row
+  byte pupilRow = eyePupil;
 
   // perform offset X
   // bit shift and fill in new bit with 1 
@@ -187,55 +364,43 @@ void displayEyes(int offsetX, int offsetY)
   currentY = offsetY;
 }
 
-
 /*
-  This method blinks both eyes
+  This method corrects provided coordinate value
 */
-void blinkEyes()
+int getValidValue(int value)
 {
-  blinkEyes(true, true);
+  if (value > MAX)
+    return MAX;
+  else if (value < MIN)
+    return MIN;
+  else
+    return value;
 }
 
-
 /*
-  This method blinks eyes as per provided params
+  This method pulsates eye (changed LED brightness)
 */
-void blinkEyes(boolean blinkLeft, boolean blinkRight)
+void glowEyes(int times)
 {
-  // blink?
-  if (!blinkLeft && !blinkRight)
-    return;
-  
-  // close eyelids
-  for (int i=0; i<=3; i++)
+  for (int t=0; t<times; t++)
   {
-    if (blinkLeft)
+    for (int i=2; i<=8; i++)
     {
-      lc.setRow(0, i, 0);
-      lc.setRow(0, 7-i, 0);
+      lc.setIntensity(0,i);
+      lc.setIntensity(1,i);
+      delay(50);
     }
-    if (blinkRight)
+
+    delay(250);
+
+    for (int i=7; i>=1; i--)
     {
-      lc.setRow(1, i, 0);
-      lc.setRow(1, 7-i, 0);
+      lc.setIntensity(0,i);
+      lc.setIntensity(1,i);
+      delay(25);
     }
-    delay(DELAY_BLINK);
-  }
-  
-  // open eyelids
-  for (int i=3; i>=0; i--) 
-  {
-    if (blinkLeft)
-    {
-      lc.setRow(0, i, eyeCurrent[i]);
-      lc.setRow(0, 7-i, eyeCurrent[7-i]);
-    }
-    if (blinkRight)
-    {
-      lc.setRow(1, i, eyeCurrent[i]);
-      lc.setRow(1, 7-i, eyeCurrent[7-i]);
-    }
-    delay(DELAY_BLINK);
+
+    delay(150);
   }
 }
 
@@ -251,15 +416,15 @@ void moveEyes(int newX, int newY, int stepDelay)
   // fix invalid new X Y values
   newX = getValidValue(newX);
   newY = getValidValue(newY);
-   
-  // eval how many steps needed to get to new position
+  
+  // eval steps
   int stepsX = abs(currentX - newX);
   int stepsY = abs(currentY - newY);
-  
-  // need at least 1 X or 1 Y step
-  if ((stepsX == 0) && (stepsY ==0))
-    return;
 
+  // need to change at least one position
+  if ((stepsX == 0) && (stepsY == 0))
+    return;
+   
   // eval direction of movement, # of steps, change per X Y step, perform move
   int dirX = (newX >= currentX) ? 1 : -1;
   int dirY = (newY >= currentY) ? 1 : -1;
@@ -276,29 +441,55 @@ void moveEyes(int newX, int newY, int stepDelay)
 }
 
 /*
-  Test display and blink 
+  This method lowers and raises left pupil only
 */
-void testDisplayBlink()
+void lazyEye()
 {
-  blinkEyes(true, false);
-  blinkEyes(false, true);
+  moveEyes(0, 1, 50);
+  delay(500);
+  
+  // lower left pupil slowly
+  for (int i=0; i<3; i++)
+  {
+    lc.setRow(1, i+2, eyeBall[i+2]);
+    lc.setRow(1, i+3, eyeBall[i+3] & eyePupil);
+    lc.setRow(1, i+4, eyeBall[i+4] & eyePupil);
+    delay(150);
+  }
+  
   delay(1000);
-  displayEyes(1,0); delay(100);
-  displayEyes(2,0); delay(1000);
-  displayEyes(1,0); delay(50);
-  displayEyes(0,0); delay(50);
-  displayEyes(-1,0); delay(50);
-  displayEyes(-2,0); delay(1000);
-  blinkEyes(); delay(1000);
-  displayEyes(-1,0); delay(100);
-  displayEyes(0,0); delay(1000);
-  displayEyes(0,1); delay(100);
-  displayEyes(0,2); delay(1000);
-  blinkEyes(); delay(1000);
-  displayEyes(0,1); delay(100);
-  displayEyes(0,0); delay(2000);
-  blinkEyes(); delay(500); blinkEyes(); delay(1000);
-  displayEyes(1,1); delay(3000);
-  displayEyes(0,0); delay(50);
-  displayEyes(-1,-1); delay(2000);
+  
+  // raise left pupil quickly
+  for (int i=0; i<3; i++)
+  {
+    lc.setRow(1, 4-i, eyeBall[4-i] & eyePupil);
+    lc.setRow(1, 5-i, eyeBall[5-i] & eyePupil);
+    lc.setRow(1, 6-i, eyeBall[6-i]);
+    delay(25);
+  }  
+}
+
+void roundSpin(int times)
+{
+  if (times == 0)
+    return;
+  
+  moveEyes(0, 2, 50);
+  delay(500);
+  
+  for (int i=0; i<times; i++)
+  {
+    displayEyes(1,2); delay(40);
+    displayEyes(2,1); delay(40);
+    displayEyes(2,0); delay(40);
+    displayEyes(2,-1); delay(40);
+    displayEyes(1,-2); delay(40);
+    displayEyes(0,-2); delay(40);
+    displayEyes(-1,-2); delay(40);
+    displayEyes(-2,-1); delay(40);
+    displayEyes(-2,0); delay(40);
+    displayEyes(-2,1); delay(40);
+    displayEyes(-1,2); delay(40);
+    displayEyes(0,2); delay(40);
+  }
 }
