@@ -215,7 +215,7 @@ void blinkEyes(boolean blinkLeft, boolean blinkRight)
   }
 }
 /*
-  This methods spins moves eyes to center position, 
+  This methods moves eyes to center position, 
   then moves horizontally with wrapping around edges.
 */
 void crazySpin(int times)
@@ -378,7 +378,7 @@ int getValidValue(int value)
 }
 
 /*
-  This method pulsates eye (changed LED brightness)
+  This method pulsates eye (changes LED brightness)
 */
 void glowEyes(int times)
 {
@@ -441,7 +441,7 @@ void moveEyes(int newX, int newY, int stepDelay)
 }
 
 /*
-  This method lowers and raises left pupil only
+  This method lowers and raises right pupil only
 */
 void lazyEye()
 {
@@ -469,6 +469,9 @@ void lazyEye()
   }  
 }
 
+/*
+  This method spins pupils clockwise
+*/
 void roundSpin(int times)
 {
   if (times == 0)
