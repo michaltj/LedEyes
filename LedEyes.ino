@@ -5,10 +5,14 @@
  Create LetControl object, define pin connections
  We have 2 MAX72XX for eyes.
  */
-#define PIN_EYES_DIN 12
+#define PIN_EYES_DIN 9
 #define PIN_EYES_CS 10
 #define PIN_EYES_CLK 11
 LedControl lc = LedControl(PIN_EYES_DIN, PIN_EYES_CLK, PIN_EYES_CS, 2);
+
+// rotation
+bool rotateMatrix0 = false;  // rotate 0 matrix by 180 deg
+bool rotateMatrix1 = true;  // rotate 1 matrix by 180 deg
 
 // define eye ball without pupil  
 byte eyeBall[8]={
@@ -65,8 +69,8 @@ void setup()
   {
     for (int r=0; r<=7; r++)
     {
-      lc.setRow(0, r, b);
-      lc.setRow(1, r, b);
+      setRow(0, r, b);
+      setRow(1, r, b);
     }
     b = b >> 1;
     delay(50);
@@ -75,8 +79,8 @@ void setup()
   b = B11111111;
   for (int r=0; r<=7; r++)
   {
-    lc.setRow(0, r, b);
-    lc.setRow(1, r, b);
+    setRow(0, r, b);
+    setRow(1, r, b);
   }
   delay(500);
   
@@ -104,7 +108,7 @@ void loop()
  
   // move to random position, wait random time
   moveEyes(random(MIN, MAX + 1), random(MIN, MAX + 1), 50);
-  delay(random(2, 7) * 500);
+  delay(random(5, 7) * 500);
   
   // blink time?
   if (random(0, 5) == 0)
@@ -187,13 +191,13 @@ void blinkEyes(boolean blinkLeft, boolean blinkRight)
   {
     if (blinkLeft)
     {
-      lc.setRow(0, i, 0);
-      lc.setRow(0, 7-i, 0);
+      setRow(0, i, 0);
+      setRow(0, 7-i, 0);
     }
     if (blinkRight)
     {
-      lc.setRow(1, i, 0);
-      lc.setRow(1, 7-i, 0);
+      setRow(1, i, 0);
+      setRow(1, 7-i, 0);
     }
     delay(DELAY_BLINK);
   }
@@ -203,13 +207,13 @@ void blinkEyes(boolean blinkLeft, boolean blinkRight)
   {
     if (blinkLeft)
     {
-      lc.setRow(0, i, eyeCurrent[i]);
-      lc.setRow(0, 7-i, eyeCurrent[7-i]);
+      setRow(0, i, eyeCurrent[i]);
+      setRow(0, 7-i, eyeCurrent[7-i]);
     }
     if (blinkRight)
     {
-      lc.setRow(1, i, eyeCurrent[i]);
-      lc.setRow(1, 7-i, eyeCurrent[7-i]);
+      setRow(1, i, eyeCurrent[i]);
+      setRow(1, 7-i, eyeCurrent[7-i]);
     }
     delay(DELAY_BLINK);
   }
@@ -234,8 +238,8 @@ void crazySpin(int times)
     {
       row = row >> 1;
       row = row | B10000000;
-      lc.setRow(0, 3, row);  lc.setRow(1, 3, row);  
-      lc.setRow(0, 4, row);  lc.setRow(1, 4, row);
+      setRow(0, 3, row);  setRow(1, 3, row);  
+      setRow(0, 4, row);  setRow(1, 4, row);
       delay(50); 
       if (t == 0) 
         delay((5-i)*10); // increase delay on 1st scroll (speed up effect)
@@ -246,8 +250,8 @@ void crazySpin(int times)
       row = row >> 1;
       if (i>=2) 
         row = row | B10000000;
-      lc.setRow(0, 3, row);  lc.setRow(1, 3, row);  
-      lc.setRow(0, 4, row);  lc.setRow(1, 4, row);
+      setRow(0, 3, row);  setRow(1, 3, row);  
+      setRow(0, 4, row);  setRow(1, 4, row);
       delay(50);
       if (t == (times-1)) 
         delay((i+1)*10); // increase delay on last scroll (slow down effect)
@@ -274,8 +278,8 @@ void crossEyes()
     pupilL = pupilL << 1;
     pupilL = pupilL | B1;
     
-    lc.setRow(0, 3, pupilR); lc.setRow(1, 3, pupilL);
-    lc.setRow(0, 4, pupilR); lc.setRow(1, 4, pupilL);
+    setRow(0, 3, pupilR); setRow(1, 3, pupilL);
+    setRow(0, 4, pupilR); setRow(1, 4, pupilL);
     
     delay(100);
   }
@@ -290,8 +294,8 @@ void crossEyes()
     pupilL = pupilL >> 1;
     pupilL = pupilL | B10000000;
     
-    lc.setRow(0, 3, pupilR); lc.setRow(1, 3, pupilL);
-    lc.setRow(0, 4, pupilR); lc.setRow(1, 4, pupilL);
+    setRow(0, 3, pupilR); setRow(1, 3, pupilL);
+    setRow(0, 4, pupilR); setRow(1, 4, pupilL);
     
     delay(100);
   }
@@ -341,20 +345,20 @@ void displayEyes(int offsetX, int offsetY)
   {
     if (r == row1)
     {
-      lc.setRow(0, r, pupilRow1);
-      lc.setRow(1, r, pupilRow1);
+      setRow(0, r, pupilRow1);
+      setRow(1, r, pupilRow1);
       eyeCurrent[r] = pupilRow1;
     }
     else if (r == row2)
     {
-      lc.setRow(0, r, pupilRow2);
-      lc.setRow(1, r, pupilRow2);
+      setRow(0, r, pupilRow2);
+      setRow(1, r, pupilRow2);
       eyeCurrent[r] = pupilRow2;
     }
     else
     {
-      lc.setRow(0, r, eyeBall[r]);
-      lc.setRow(1, r, eyeBall[r]);
+      setRow(0, r, eyeBall[r]);
+      setRow(1, r, eyeBall[r]);
       eyeCurrent[r] = eyeBall[r];
     }
   }
@@ -452,9 +456,9 @@ void lazyEye()
   // lower left pupil slowly
   for (int i=0; i<3; i++)
   {
-    lc.setRow(1, i+2, eyeBall[i+2]);
-    lc.setRow(1, i+3, eyeBall[i+3] & eyePupil);
-    lc.setRow(1, i+4, eyeBall[i+4] & eyePupil);
+    setRow(1, i+2, eyeBall[i+2]);
+    setRow(1, i+3, eyeBall[i+3] & eyePupil);
+    setRow(1, i+4, eyeBall[i+4] & eyePupil);
     delay(150);
   }
   
@@ -463,9 +467,9 @@ void lazyEye()
   // raise left pupil quickly
   for (int i=0; i<3; i++)
   {
-    lc.setRow(1, 4-i, eyeBall[4-i] & eyePupil);
-    lc.setRow(1, 5-i, eyeBall[5-i] & eyePupil);
-    lc.setRow(1, 6-i, eyeBall[6-i]);
+    setRow(1, 4-i, eyeBall[4-i] & eyePupil);
+    setRow(1, 5-i, eyeBall[5-i] & eyePupil);
+    setRow(1, 6-i, eyeBall[6-i]);
     delay(25);
   }  
 }
@@ -497,3 +501,52 @@ void roundSpin(int times)
     displayEyes(2, 0); delay(40);
   }
 }
+
+
+/*
+  This method sets values to matrix row
+  Performs 180 rotation if needed
+*/
+void setRow(int addr, int row, byte rowValue)
+{
+  if (((addr == 0) && (rotateMatrix0)) || (addr == 1 && rotateMatrix1))
+  {
+    row = abs(row - 7);
+    rowValue = bitswap(rowValue);
+  }
+
+  lc.setRow(addr, row, rowValue);
+}
+
+
+/*
+  Reverse bits in byte
+  http://www.nrtm.org/index.php/2013/07/25/reverse-bits-in-a-byte/
+*/
+byte bitswap (byte x)
+{
+  byte result;
+ 
+    asm("mov __tmp_reg__, %[in] \n\t"
+      "lsl __tmp_reg__  \n\t"   /* shift out high bit to carry */
+      "ror %[out] \n\t"  /* rotate carry __tmp_reg__to low bit (eventually) */
+      "lsl __tmp_reg__  \n\t"   /* 2 */
+      "ror %[out] \n\t"
+      "lsl __tmp_reg__  \n\t"   /* 3 */
+      "ror %[out] \n\t"
+      "lsl __tmp_reg__  \n\t"   /* 4 */
+      "ror %[out] \n\t"
+ 
+      "lsl __tmp_reg__  \n\t"   /* 5 */
+      "ror %[out] \n\t"
+      "lsl __tmp_reg__  \n\t"   /* 6 */
+      "ror %[out] \n\t"
+      "lsl __tmp_reg__  \n\t"   /* 7 */
+      "ror %[out] \n\t"
+      "lsl __tmp_reg__  \n\t"   /* 8 */
+      "ror %[out] \n\t"
+      : [out] "=r" (result) : [in] "r" (x));
+      return(result);
+}
+
+
