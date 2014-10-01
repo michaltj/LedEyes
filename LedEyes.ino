@@ -5,14 +5,14 @@
  Create LetControl object, define pin connections
  We have 2 MAX72XX for eyes.
  */
-#define PIN_EYES_DIN 9
-#define PIN_EYES_CS 10
-#define PIN_EYES_CLK 11
+#define PIN_EYES_DIN 12
+#define PIN_EYES_CS 11
+#define PIN_EYES_CLK 10
 LedControl lc = LedControl(PIN_EYES_DIN, PIN_EYES_CLK, PIN_EYES_CS, 2);
 
 // rotation
 bool rotateMatrix0 = false;  // rotate 0 matrix by 180 deg
-bool rotateMatrix1 = true;  // rotate 1 matrix by 180 deg
+bool rotateMatrix1 = false;  // rotate 1 matrix by 180 deg
 
 // define eye ball without pupil  
 byte eyeBall[8]={
@@ -98,6 +98,7 @@ void setup()
   blinkEyes(true, false);
   blinkEyes(false, true);
   delay(1000);
+
 }
 
 /*
@@ -105,7 +106,6 @@ void setup()
 */
 void loop() 
 { 
- 
   // move to random position, wait random time
   moveEyes(random(MIN, MAX + 1), random(MIN, MAX + 1), 50);
   delay(random(5, 7) * 500);
@@ -125,42 +125,45 @@ void loop()
     if (cntLoop == EFFECT_ITERATION)
     {
       cntLoop = 0;
-      if (cntEffect > 5) cntEffect = 0;
+      if (cntEffect > 6) cntEffect = 0;
       switch(cntEffect)
       {
-        case 0: // crazy blink
-          blinkEyes(true, false);
-          blinkEyes(false, true);
-          blinkEyes(true, false);
-          blinkEyes(false, true);
-          delay(1000);
-          break;
-    
-        case 1: // cross eyes
+        case 0: // cross eyes
           crossEyes();
           delay(1000);
           break;
     
+        case 1: // round spin
+          roundSpin(2);
+          delay(1000);
+          break;
+        
         case 2: // crazy spin
           crazySpin(2);
           delay(1000);
           break;
         
-        case 3: // lazy eye
+        case 3: // meth eyes
+          methEyes();
+          delay(1000);
+          break;
+                
+        case 4: // lazy eye
           lazyEye();
           delay(1000);
           break;
           
-        case 4: // glow
+        case 5: // crazy blink
+          blinkEyes(true, false);
+          blinkEyes(false, true);
+          delay(1000);
+          break;
+
+        case 6: // glow
           glowEyes(3);
           delay(1000);
           break;
-          
-        case 5: // round spin
-          roundSpin(2);
-          delay(1000);
-          break;
-          
+
         default: 
           break;
       }
@@ -218,6 +221,7 @@ void blinkEyes(boolean blinkLeft, boolean blinkRight)
     delay(DELAY_BLINK);
   }
 }
+
 /*
   This methods moves eyes to center position, 
   then moves horizontally with wrapping around edges.
@@ -409,6 +413,48 @@ void glowEyes(int times)
 }
 
 /*
+  This method moves eyes to center, out and then back to center
+*/
+void methEyes()
+{
+  moveEyes(0, 0, 50);
+  delay(500);
+
+  byte pupilR = eyePupil;  
+  byte pupilL = eyePupil;
+
+  // move pupils out
+  for (int i=0; i<2; i++)
+  {
+    pupilR = pupilR << 1;
+    pupilR = pupilR | B1;
+    pupilL = pupilL >> 1;
+    pupilL = pupilL | B10000000;
+    
+    setRow(0, 3, pupilR); setRow(1, 3, pupilL);
+    setRow(0, 4, pupilR); setRow(1, 4, pupilL);
+    
+    delay(100);
+  }
+
+  delay(2000);
+  
+  // move pupils back to center
+  for (int i=0; i<2; i++)
+  {
+    pupilR = pupilR >> 1;
+    pupilR = pupilR | B10000000;
+    pupilL = pupilL << 1;
+    pupilL = pupilL | B1;
+    
+    setRow(0, 3, pupilR); setRow(1, 3, pupilL);
+    setRow(0, 4, pupilR); setRow(1, 4, pupilL);
+    
+    delay(100);
+  }
+}
+
+/*
   This method moves both eyes from current position to new position
 */
 void moveEyes(int newX, int newY, int stepDelay)
@@ -487,17 +533,17 @@ void roundSpin(int times)
   
   for (int i=0; i<times; i++)
   {
-    displayEyes(2, -1); delay(40);
-    displayEyes(1, -2); delay(40);
-    displayEyes(0, -2); delay(40);
-    displayEyes(-1, -2); delay(40);
+    displayEyes(2, -1); delay(40); if (i==0) delay(40);
+    displayEyes(1, -2); delay(40); if (i==0) delay(30);
+    displayEyes(0, -2); delay(40); if (i==0) delay(20);
+    displayEyes(-1, -2); delay(40);if (i==0) delay(10);
     displayEyes(-2, -1); delay(40);
     displayEyes(-2, 0); delay(40);
-    displayEyes(-2, 1); delay(40);
-    displayEyes(-1, 2); delay(40);
-    displayEyes(0, 2); delay(40);
-    displayEyes(1, 2); delay(40);
-    displayEyes(2, 1); delay(40);
+    displayEyes(-2, 1); delay(40);if (i==(times-1)) delay(10);
+    displayEyes(-1, 2); delay(40);if (i==(times-1)) delay(20);
+    displayEyes(0, 2); delay(40); if (i==(times-1)) delay(30);
+    displayEyes(1, 2); delay(40); if (i==(times-1)) delay(40);
+    displayEyes(2, 1); delay(40); if (i==(times-1)) delay(50);
     displayEyes(2, 0); delay(40);
   }
 }
