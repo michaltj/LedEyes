@@ -642,4 +642,4 @@ byte bitswap (byte x)
       "ror %[out] \n\t"
       : [out] "=r" (result) : [in] "r" (x));
       return(result);
-}s
+}
