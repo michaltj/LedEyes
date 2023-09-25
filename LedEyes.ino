@@ -14,16 +14,21 @@ LedControl lc = LedControl(PIN_EYES_DIN, PIN_EYES_CLK, PIN_EYES_CS, 2);
 bool rotateMatrix0 = false;  // rotate 0 matrix by 180 deg
 bool rotateMatrix1 = false;  // rotate 1 matrix by 180 deg
 
+byte eyeRow0 = B00111100;
+byte eyeRow1 = B01111110;
+byte eyeRow6 = B01111110;
+byte eyeRow7 = B00111100;
+
 // define eye ball without pupil  
 byte eyeBall[8]={
-  B00111100,
-  B01111110,
+  eyeRow0,
+  eyeRow1,
   B11111111,
   B11111111,
   B11111111,
   B11111111,
-  B01111110,
-  B00111100
+  eyeRow6,
+  eyeRow7
 };
 
 byte eyePupil = B11100111;
@@ -125,7 +130,7 @@ void loop()
     if (cntLoop == EFFECT_ITERATION)
     {
       cntLoop = 0;
-      if (cntEffect > 6) cntEffect = 0;
+      if (cntEffect > 7) cntEffect = 0;
       switch(cntEffect)
       {
         case 0: // cross eyes
@@ -161,6 +166,11 @@ void loop()
 
         case 6: // glow
           glowEyes(3);
+          delay(1000);
+          break;
+
+        case 7: // sus
+          susEyes();
           delay(1000);
           break;
 
@@ -548,6 +558,45 @@ void roundSpin(int times)
   }
 }
 
+/*
+  This method performs suspicious look around
+*/
+void susEyes()
+{
+  // center eyes
+  moveEyes(0, 0, 50);
+  delay(500);
+  // turn off top and bottom rows (row 0 and 7)
+  eyeBall[0] = 0;
+  eyeBall[7] = 0;
+  displayEyes(0, 0);
+  delay(500);
+  // turn off rows 1 and 6
+  eyeBall[1] = 0;
+  eyeBall[6] = 0;
+  displayEyes(0, 0);
+  delay(500);
+  // look slowly to one side, then another, then center
+  moveEyes(MAX, 0, 125);
+  delay(1000);
+  moveEyes(MIN, 0, 75);
+  delay(1000);
+  moveEyes(MAX, 0, 125);
+  delay(1000);
+  moveEyes(0, 0, 125);
+  delay(1000);
+  // restore eyeball
+  eyeBall[1] = eyeRow1;
+  eyeBall[6] = eyeRow6;
+  displayEyes(0, 0);
+  delay(250);
+  eyeBall[0] = eyeRow0;
+  eyeBall[7] = eyeRow7;
+  displayEyes(0, 0);
+  delay(1000);
+  blinkEyes();
+  delay(1000);
+}
 
 /*
   This method sets values to matrix row
@@ -593,6 +642,4 @@ byte bitswap (byte x)
       "ror %[out] \n\t"
       : [out] "=r" (result) : [in] "r" (x));
       return(result);
-}
-
-
+}s
