@@ -16,6 +16,7 @@ bool rotateMatrix1 = false;  // rotate 1 matrix by 180 deg
 
 byte eyeRow0 = B00111100;
 byte eyeRow1 = B01111110;
+byte eyeRowF = B11111111;
 byte eyeRow6 = B01111110;
 byte eyeRow7 = B00111100;
 
@@ -23,15 +24,16 @@ byte eyeRow7 = B00111100;
 byte eyeBall[8]={
   eyeRow0,
   eyeRow1,
-  B11111111,
-  B11111111,
-  B11111111,
-  B11111111,
+  eyeRowF,
+  eyeRowF,
+  eyeRowF,
+  eyeRowF,
   eyeRow6,
   eyeRow7
 };
 
 byte eyePupil = B11100111;
+byte eyePupilWide = B11000011;
 
 // stores current state of LEDs
 byte eyeCurrent[8];
@@ -103,7 +105,6 @@ void setup()
   blinkEyes(true, false);
   blinkEyes(false, true);
   delay(1000);
-
 }
 
 /*
@@ -130,7 +131,7 @@ void loop()
     if (cntLoop == EFFECT_ITERATION)
     {
       cntLoop = 0;
-      if (cntEffect > 7) cntEffect = 0;
+      if (cntEffect > 8) cntEffect = 0;
       switch(cntEffect)
       {
         case 0: // cross eyes
@@ -172,6 +173,11 @@ void loop()
         case 7: // sus
           susEyes();
           delay(1000);
+          break;
+
+        case 8: // alternating widened eyes 
+          widenEyePupils();
+          delay(2000);
           break;
 
         default: 
@@ -596,6 +602,72 @@ void susEyes()
   delay(1000);
   blinkEyes();
   delay(1000);
+}
+
+/*
+  This method widens eye pupils in alternating order
+*/
+void widenEyePupils() 
+{
+  // center eyes
+  moveEyes(0, 0, 50);
+  delay(1000);
+  
+  // alternate widened pupil
+  for (int i = 0; i < 4; i++)
+  {
+    displayWidePupils(true, false);
+    delay(500);
+    displayWidePupils(false, true);
+    delay(500);
+  }
+  displayEyes(0,0);
+}
+
+/*
+  This method displays wide pupil
+*/
+void displayWidePupils(bool left, bool right)
+{
+  // 2 top rows are same as regular eye
+  setRow(0, 0, eyeRow0); setRow(1, 0, eyeRow0);
+  setRow(0, 1, eyeRow1); setRow(1, 1, eyeRow1);
+
+  // widen left pupil?
+  if (left)
+  {
+    setRow(0, 2, eyePupilWide);
+    setRow(0, 3, eyePupilWide);
+    setRow(0, 4, eyePupilWide);
+    setRow(0, 5, eyePupilWide);
+  }
+  else
+  {
+    setRow(0, 2, eyeRowF);
+    setRow(0, 3, eyeRowF & eyePupil);
+    setRow(0, 4, eyeRowF & eyePupil);
+    setRow(0, 5, eyeRowF);
+  }
+
+  // widen right pupil?
+  if (right)
+  {
+    setRow(1, 2, eyePupilWide);
+    setRow(1, 3, eyePupilWide);
+    setRow(1, 4, eyePupilWide);
+    setRow(1, 5, eyePupilWide);
+  }
+  else
+  {
+    setRow(1, 2, eyeRowF);
+    setRow(1, 3, eyeRowF & eyePupil);
+    setRow(1, 4, eyeRowF & eyePupil);
+    setRow(1, 5, eyeRowF);
+  }
+
+  // 2 bottom rows are same as regular eye
+  setRow(0, 6, eyeRow6); setRow(1, 6, eyeRow6);
+  setRow(0, 7, eyeRow7); setRow(1, 7, eyeRow7);
 }
 
 /*
